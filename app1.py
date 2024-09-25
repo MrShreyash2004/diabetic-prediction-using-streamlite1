@@ -73,7 +73,7 @@ def main_page(model, scaler):
 
         # Redirect to prediction page  
         st.session_state.predicted = True  
-        st.experimental_rerun()  # Reload the app to show prediction page  
+        st.stop()  # Stop and refresh the app to show the prediction page  
 
 # Prediction Page  
 def prediction_page(model, scaler):  
