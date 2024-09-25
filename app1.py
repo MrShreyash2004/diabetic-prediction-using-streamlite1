@@ -7,7 +7,6 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler  
 from sklearn.linear_model import LogisticRegression  
 from sklearn.metrics import accuracy_score  
-import matplotlib.pyplot as plt  
 
 # Load Dataset  
 @st.cache_data  
@@ -90,22 +89,11 @@ def prediction_page(model, scaler):
     if prediction[0] == 1:  
         st.error('The model predicts that the patient is **Positive for Diabetes**')  
         confidence = prediction_proba[0][1]  
-        color = 'red'  # Color for positive prediction  
     else:  
         st.success('The model predicts that the patient is **Negative for Diabetes**')  
         confidence = prediction_proba[0][0]  
-        color = 'green'  # Color for negative prediction  
 
-    # Visualize prediction as a pie chart  
-    labels = ['Diabetes Positive', 'Diabetes Negative']  
-    sizes = [confidence * 100, (1 - confidence) * 100]  
-    colors = [color, 'lightgray']  
-    explode = (0.1, 0)  # explode the 1st slice (diabetes positive)  
-
-    plt.figure(figsize=(6, 4))  
-    plt.pie(sizes, explode=explode, labels=labels, colors=colors, autopct='%1.1f%%', shadow=True, startangle=90)  
-    plt.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.  
-    st.pyplot(plt)  
+    st.write(f"Confidence Level: {confidence * 100:.2f}%")  # Show confidence level without graph  
 
 # Main app structure  
 def main():  
