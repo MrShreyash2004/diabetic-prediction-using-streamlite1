@@ -101,10 +101,7 @@ def output_page(model, scaler, accuracy):
 
     st.write(f"Confidence of Prediction: {prediction_proba[0][prediction][0]*100:.2f}%")  
 
-    # Optional: Display additional analysis or insights based on the model's predictions.  
-    st.info("This diabetes prediction model is based on patient parameters and historical data.")  
-
-# Main app structure  
+    
 def main():  
     # Load data and build model  
     data = load_data()  
