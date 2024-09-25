@@ -7,6 +7,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler  
 from sklearn.linear_model import LogisticRegression  
 from sklearn.metrics import accuracy_score  
+import matplotlib.pyplot as plt  
 
 # Load Dataset  
 @st.cache_data  
@@ -55,12 +56,11 @@ def main_page(model, scaler):
         skin_thickness = st.number_input('Skin Thickness (mm)', min_value=0, max_value=100, value=20)  
         bmi = st.number_input('Body Mass Index (BMI)', min_value=0.0, max_value=70.0, value=25.0, format="%.1f")  
         diabetes_pedigree = st.number_input('Diabetes Pedigree Function', min_value=0.0, max_value=2.5, value=0.5, format="%.2f")  
-        city = st.text_input('Enter your City', placeholder="City name")  
 
         predict_button = st.form_submit_button(label='🔍 Predict')  
 
     if predict_button:  
-        # Store inputs in session state for future use  
+        # Store inputs in session state for prediction page  
         st.session_state.inputs = {  
             'Pregnancies': pregnancies,  
             'Glucose': glucose,  
@@ -72,49 +72,58 @@ def main_page(model, scaler):
             'Age': age  
         }  
 
-        # Predict diabetes  
-        input_data = pd.DataFrame(st.session_state.inputs, index=[0])  
-        input_scaled = scaler.transform(input_data)  
-        prediction = model.predict(input_scaled)  
-        prediction_proba = model.predict_proba(input_scaled)  
+        # Redirect to prediction page  
+        st.session_state.predicted = True  
+        st.experimental_rerun()  # Reload the app to show prediction page  
 
-        # Display prediction results  
-        st.subheader('Prediction Result')  
-        if prediction[0] == 1:  
-            st.error('The model predicts that the patient is **Positive for Diabetes**')  
-            st.write(f"Confidence of Prediction: {prediction_proba[0][1]*100:.2f}%")  
-            # Show nearby doctors option  
-            st.write("You can consult with nearby doctors who specialize in diabetes.")  
-            search_doctors(city)  # Call function to display doctors based on the city  
-        else:  
-            st.success('The model predicts that the patient is **Negative for Diabetes**')  
-            st.write(f"Confidence of Prediction: {prediction_proba[0][0]*100:.2f}%")  
-  
-        # Display additional info  
-        st.info("This diabetes prediction model is based on patient parameters and historical data.")  
+# Prediction Page  
+def prediction_page(model, scaler):  
+    st.title("🩺 Prediction Result")  
 
-# Dummy function to simulate doctor retrieval  
-def search_doctors(city):  
-    # Here, you would typically query a database or an API to get doctor information.  
-    # For simplification, we'll return a dummy list of doctors.  
-    
-    if city:  
-        # Display dummy doctor information related to the city  
-        st.subheader(f"Doctors in {city} specializing in diabetes:")  
-        st.write("- Dr. John Smith - Endocrinologist (Email: john@example.com)")  
-        st.write("- Dr. Alice Johnson - Diabetes Specialist (Email: alice@example.com)")  
-        st.write("- Dr. Kevin Brown - General Practitioner (Email: kevin@example.com)")  
+    # Retrieve inputs from session state  
+    input_data = pd.DataFrame(st.session_state.inputs, index=[0])  
+    input_scaled = scaler.transform(input_data)  
+    prediction = model.predict(input_scaled)  
+    prediction_proba = model.predict_proba(input_scaled)  
+
+    # Display prediction results    
+    if prediction[0] == 1:  
+        st.error('The model predicts that the patient is **Positive for Diabetes**')  
+        confidence = prediction_proba[0][1]  
+        color = 'red'  # Color for positive prediction  
     else:  
-        st.warning("Please enter a city to find nearby doctors.")  
+        st.success('The model predicts that the patient is **Negative for Diabetes**')  
+        confidence = prediction_proba[0][0]  
+        color = 'green'  # Color for negative prediction  
+
+    # Visualize prediction as a pie chart  
+    labels = ['Diabetes Positive', 'Diabetes Negative']  
+    sizes = [confidence * 100, (1 - confidence) * 100]  
+    colors = [color, 'lightgray']  
+    explode = (0.1, 0)  # explode the 1st slice (diabetes positive)  
+
+    plt.figure(figsize=(6, 4))  
+    plt.pie(sizes, explode=explode, labels=labels, colors=colors, autopct='%1.1f%%', shadow=True, startangle=90)  
+    plt.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.  
+    st.pyplot(plt)  
 
 # Main app structure  
 def main():  
     # Load data and build model  
     data = load_data()  
     model, scaler, accuracy = build_model(data)  
+    
+    # Ensure session state variables exist  
+    if 'predicted' not in st.session_state:  
+        st.session_state.predicted = False  
+    if 'inputs' not in st.session_state:  
+        st.session_state.inputs = {}  
 
-    # Main app page  
-    main_page(model, scaler)  
+    # Display the appropriate page  
+    if not st.session_state.predicted:  
+        main_page(model, scaler)  
+    else:  
+        prediction_page(model, scaler)  
 
 if __name__ == '__main__':  
     main()
