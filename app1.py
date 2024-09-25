@@ -6,7 +6,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split  
 from sklearn.preprocessing import StandardScaler  
 from sklearn.linear_model import LogisticRegression  
-from sklearn.metrics import accuracy_score  
+from sklearn.metrics import accuracy_score   
 
 # Load Dataset  
 @st.cache_data  
@@ -40,26 +40,28 @@ def build_model(data):
 
     return model, scaler, accuracy  
 
-# Main Page  
-def main_page(model, scaler):  
+# Input Page  
+def input_page():  
     st.title("🩺 Diabetes Prediction App")  
     st.write("Please enter patient details below to predict diabetes:")  
 
     with st.form(key='input_form', clear_on_submit=True):  
-        # Input fields  
-        pregnancies = st.number_input('Number of Pregnancies', min_value=0, max_value=20, value=1)  
-        glucose = st.number_input('Glucose Level', min_value=0, max_value=200, value=120)  
-        blood_pressure = st.number_input('Blood Pressure', min_value=0, max_value=122, value=70)  
-        insulin = st.number_input('Insulin Level (mu U/ml)', min_value=0, max_value=900, value=80)  
-        age = st.number_input('Age', min_value=15, max_value=100, value=30)  
-        skin_thickness = st.number_input('Skin Thickness (mm)', min_value=0, max_value=100, value=20)  
-        bmi = st.number_input('Body Mass Index (BMI)', min_value=0.0, max_value=70.0, value=25.0, format="%.1f")  
-        diabetes_pedigree = st.number_input('Diabetes Pedigree Function', min_value=0.0, max_value=2.5, value=0.5, format="%.2f")  
+        st.header("Patient Information")  
 
-        predict_button = st.form_submit_button(label='🔍 Predict')  
+        # Input fields without columns for better visibility  
+        pregnancies = st.number_input('Number of Pregnancies', min_value=0, max_value=20, value=1, help="Number of times the patient has been pregnant.")  
+        glucose = st.number_input('Glucose Level', min_value=0, max_value=200, value=120, help="Plasma glucose concentration a 2 hours in an oral glucose tolerance test.")  
+        blood_pressure = st.number_input('Blood Pressure', min_value=0, max_value=122, value=70, help="Diastolic blood pressure (mm Hg).")  
+        insulin = st.number_input('Insulin Level (mu U/ml)', min_value=0, max_value=900, value=80, help="2-Hour serum insulin (mu U/ml).")  
+        age = st.number_input('Age', min_value=15, max_value=100, value=30, help="Age of the patient in years.")  
+        skin_thickness = st.number_input('Skin Thickness (mm)', min_value=0, max_value=100, value=20, help="Triceps skin fold thickness measured in mm.")  
+        bmi = st.number_input('Body Mass Index (BMI)', min_value=0.0, max_value=70.0, value=25.0, format="%.1f", help="Weight in kg/(height in m)^2.")  
+        diabetes_pedigree = st.number_input('Diabetes Pedigree Function', min_value=0.0, max_value=2.5, value=0.5, format="%.2f", help="Diabetes pedigree function.")  
 
-    if predict_button:  
-        # Store inputs in session state for prediction page  
+        submit_button = st.form_submit_button(label='🔍 Predict')  
+
+    if submit_button:  
+        # Store inputs in session state for use on the output page  
         st.session_state.inputs = {  
             'Pregnancies': pregnancies,  
             'Glucose': glucose,  
@@ -70,48 +72,52 @@ def main_page(model, scaler):
             'DiabetesPedigreeFunction': diabetes_pedigree,  
             'Age': age  
         }  
+        st.session_state.page = "output"  # Navigate to output page  
 
-        # Redirect to prediction page  
-        st.session_state.predicted = True  
-        st.stop()  # Stop and refresh the app to show the prediction page  
+        # Optional: Show an attractive message or image after prediction submission.  
+        st.success("Thank you! Your data has been submitted. Click on the 'Predict' button for the results.")   
 
-# Prediction Page  
-def prediction_page(model, scaler):  
-    st.title("🩺 Prediction Result")  
+# Output Page  
+def output_page(model, scaler, accuracy):  
+    st.title("📊 Prediction Result")  
 
-    # Retrieve inputs from session state  
     input_data = pd.DataFrame(st.session_state.inputs, index=[0])  
+    
+    # Display user input  
+    st.subheader('Patient Input')  
+    st.write(input_data)  
+
+    # Predict diabetes  
     input_scaled = scaler.transform(input_data)  
     prediction = model.predict(input_scaled)  
     prediction_proba = model.predict_proba(input_scaled)  
 
-    # Display prediction results    
+    # Display prediction results  
+    st.subheader('Prediction Result')  
     if prediction[0] == 1:  
         st.error('The model predicts that the patient is **Positive for Diabetes**')  
-        confidence = prediction_proba[0][1]  
     else:  
         st.success('The model predicts that the patient is **Negative for Diabetes**')  
-        confidence = prediction_proba[0][0]  
 
-    st.write(f"Confidence Level: {confidence * 100:.2f}%")  # Show confidence level without graph  
+    st.write(f"Confidence of Prediction: {prediction_proba[0][prediction][0]*100:.2f}%")  
+
+    # Optional: Display additional analysis or insights based on the model's predictions.  
+    st.info("This diabetes prediction model is based on patient parameters and historical data.")  
 
 # Main app structure  
 def main():  
     # Load data and build model  
     data = load_data()  
     model, scaler, accuracy = build_model(data)  
-    
-    # Ensure session state variables exist  
-    if 'predicted' not in st.session_state:  
-        st.session_state.predicted = False  
-    if 'inputs' not in st.session_state:  
-        st.session_state.inputs = {}  
 
-    # Display the appropriate page  
-    if not st.session_state.predicted:  
-        main_page(model, scaler)  
+    # Page navigation  
+    if 'page' not in st.session_state:  
+        st.session_state.page = "input"  # Default to input page  
+
+    if st.session_state.page == "input":  
+        input_page()  
     else:  
-        prediction_page(model, scaler)  
+        output_page(model, scaler, accuracy)  
 
 if __name__ == '__main__':  
     main()
