@@ -49,18 +49,26 @@ def input_page():
         st.header("Patient Information")  
 
         # Input fields without columns for better visibility  
-        pregnancies = st.number_input('Number of Pregnancies', min_value=0, max_value=20, value=1, help="Number of times the patient has been pregnant.")  
-        glucose = st.number_input('Glucose Level', min_value=0, max_value=200, value=120, help="Plasma glucose concentration a 2 hours in an oral glucose tolerance test.")  
-        blood_pressure = st.number_input('Blood Pressure', min_value=0, max_value=122, value=70, help="Diastolic blood pressure (mm Hg).")  
-        insulin = st.number_input('Insulin Level (mu U/ml)', min_value=0, max_value=900, value=80, help="2-Hour serum insulin (mu U/ml).")  
-        age = st.number_input('Age', min_value=15, max_value=100, value=30, help="Age of the patient in years.")  
-        skin_thickness = st.number_input('Skin Thickness (mm)', min_value=0, max_value=100, value=20, help="Triceps skin fold thickness measured in mm.")  
-        bmi = st.number_input('Body Mass Index (BMI)', min_value=0.0, max_value=70.0, value=25.0, format="%.1f", help="Weight in kg/(height in m)^2.")  
-        diabetes_pedigree = st.number_input('Diabetes Pedigree Function', min_value=0.0, max_value=2.5, value=0.5, format="%.2f", help="Diabetes pedigree function.")  
+        pregnancies = st.number_input('Number of Pregnancies', min_value=0, max_value=20, value=1,   
+                                      help="Number of times the patient has been pregnant.")  
+        glucose = st.number_input('Glucose Level', min_value=0, max_value=200, value=120,   
+                                  help="Plasma glucose concentration a 2 hours in an oral glucose tolerance test.")  
+        blood_pressure = st.number_input('Blood Pressure', min_value=0, max_value=122, value=70,   
+                                          help="Diastolic blood pressure (mm Hg).")  
+        insulin = st.number_input('Insulin Level (mu U/ml)', min_value=0, max_value=900, value=80,   
+                                  help="2-Hour serum insulin (mu U/ml).")  
+        age = st.number_input('Age', min_value=15, max_value=100, value=30,   
+                              help="Age of the patient in years.")  
+        skin_thickness = st.number_input('Skin Thickness (mm)', min_value=0, max_value=100, value=20,   
+                                          help="Triceps skin fold thickness measured in mm.")  
+        bmi = st.number_input('Body Mass Index (BMI)', min_value=0.0, max_value=70.0, value=25.0,   
+                              format="%.1f", help="Weight in kg/(height in m)^2.")  
+        diabetes_pedigree = st.number_input('Diabetes Pedigree Function', min_value=0.0, max_value=2.5,   
+                                             value=0.5, format="%.2f", help="Diabetes pedigree function.")  
 
-        submit_button = st.form_submit_button(label='🔍 Predict')  
+        submit_data_button = st.form_submit_button(label='Submit Data')  
 
-    if submit_button:  
+    if submit_data_button:  
         # Store inputs in session state for use on the output page  
         st.session_state.inputs = {  
             'Pregnancies': pregnancies,  
@@ -72,38 +80,39 @@ def input_page():
             'DiabetesPedigreeFunction': diabetes_pedigree,  
             'Age': age  
         }  
-        st.session_state.page = "output"  # Navigate to output page  
+        st.session_state.page = "predict"  # Navigate to predict page  
 
         # Optional: Show an attractive message or image after prediction submission.  
-        st.success("Thank you! Your data has been submitted. Click on the 'Predict' button for the results.")   
-
-# Output Page  
-def output_page(model, scaler, accuracy):  
+        st.success("Thank you! Your data has been submitted. Click on 'Predict' to see the results.")   
+        
+# Prediction Page  
+def predict_page(model, scaler):  
     st.title("📊 Prediction Result")  
-
+    
     input_data = pd.DataFrame(st.session_state.inputs, index=[0])  
     
     # Display user input  
     st.subheader('Patient Input')  
     st.write(input_data)  
 
-    # Predict diabetes  
-    input_scaled = scaler.transform(input_data)  
-    prediction = model.predict(input_scaled)  
-    prediction_proba = model.predict_proba(input_scaled)  
+    predict_button = st.button('🔍 Predict')  
 
-    # Display prediction results  
-    st.subheader('Prediction Result')  
-    if prediction[0] == 1:  
-        st.error('The model predicts that the patient is **Positive for Diabetes**')  
-    else:  
-        st.success('The model predicts that the patient is **Negative for Diabetes**')  
+    if predict_button:  
+        # Predict diabetes  
+        input_scaled = scaler.transform(input_data)  
+        prediction = model.predict(input_scaled)  
+        prediction_proba = model.predict_proba(input_scaled)  
 
-    st.write(f"Confidence of Prediction: {prediction_proba[0][prediction][0]*100:.2f}%")  
+        # Display prediction results  
+        st.subheader('Prediction Result')  
+        if prediction[0] == 1:  
+            st.error('The model predicts that the patient is **Positive for Diabetes**')  
+        else:  
+            st.success('The model predicts that the patient is **Negative for Diabetes**')  
 
-    # Optional: Display additional analysis or insights based on the model's predictions.  
-    st.info("This diabetes prediction model is based on patient parameters and historical data.")  
+        st.write(f"Confidence of Prediction: {prediction_proba[0][prediction][0]*100:.2f}%")  
 
+        
 # Main app structure  
 def main():  
     # Load data and build model  
@@ -116,8 +125,8 @@ def main():
 
     if st.session_state.page == "input":  
         input_page()  
-    else:  
-        output_page(model, scaler, accuracy)  
+    elif st.session_state.page == "predict":  
+        predict_page(model, scaler)  
 
 if __name__ == '__main__':  
     main()
