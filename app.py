@@ -19,8 +19,8 @@ import hashlib
 def create_connection():  
     return mysql.connector.connect(  
         host='localhost',  
-        user='your_db_username',  # Update with your database username  
-        password='your_db_password',  # Update with your database password  
+        user='root',  # Update with your database username  
+        password='test123',  # Update with your database password  
         database='diabetes_app'  # Update with your database name  
     )  
 
