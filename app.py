@@ -9,14 +9,17 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score 
 import pymysql
 import hashlib  
+import re  # For email validation
 
 # Database connection using pymysql
 def create_connection():  
     return pymysql.connect(
         host='localhost',  
         user='root',  # Update with your database username  
-        password='test123',  # Update with your database password  
-        database='diabetes_app'  # Update with your database name  
+        password='Shre0802004',  # Update with your database password  
+        database='diabetic_prediction',  # Update with your database name  
+        charset='utf8mb4',
+        cursorclass=pymysql.cursors.DictCursor  # To get results as dictionaries
     )  
 
 # Hash password  
@@ -24,14 +27,26 @@ def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()  
 
 # User Signup  
-def signup(username, password):  
+def signup(username, password, full_name, place, mobile_number, email):  
     conn = create_connection()  
     cursor = conn.cursor()  
     try:  
         hashed_password = hash_password(password)  
-        cursor.execute("INSERT INTO users (username, password) VALUES (%s, %s)", (username, hashed_password))  
+        sql = """
+            INSERT INTO users (username, password, full_name, place, mobile_number, email) 
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """
+        cursor.execute(sql, (username, hashed_password, full_name, place, mobile_number, email))  
         conn.commit()  
         st.success("Signup successful! You can now sign in.")  
+    except pymysql.err.IntegrityError as e:  
+        if 'Duplicate entry' in str(e):
+            if 'username' in str(e):
+                st.error("Username already exists. Please choose a different one.")
+            elif 'email' in str(e):
+                st.error("Email already registered. Please use a different email.")
+        else:
+            st.error(f"Integrity Error during signup: {e}")  
     except pymysql.MySQLError as e:  
         st.error(f"Error during signup: {e}")  
     finally:  
@@ -44,11 +59,13 @@ def signin(username, password):
     cursor = conn.cursor()  
     try:  
         hashed_password = hash_password(password)  
-        cursor.execute("SELECT * FROM users WHERE username = %s AND password = %s", (username, hashed_password))  
+        sql = "SELECT * FROM users WHERE username = %s AND password = %s"  
+        cursor.execute(sql, (username, hashed_password))  
         result = cursor.fetchone()  
         return result is not None  
     except pymysql.MySQLError as e:  
         st.error(f"Error during signin: {e}")  
+        return False
     finally:  
         cursor.close()  
         conn.close()  
@@ -140,29 +157,45 @@ def output_page(model, scaler, accuracy):
     else:  
         st.success('The model predicts that the patient is **Negative for Diabetes**')  
 
-    st.write(f"Prediction Confidence: {prediction_proba[0][prediction][0]*100:.2f}%")  
+    st.write(f"Prediction Confidence: {prediction_proba[0][prediction[0]] * 100:.2f}%")  
+    st.write(f"Model Accuracy on Test Data: {accuracy * 100:.2f}%")  
 
 # Signup Page  
 def signup_page():  
     st.title("Signup Page")  
     
-    username = st.text_input("Username")  
-    password = st.text_input("Password", type='password')  
-    signup_button = st.button("Signup")  
+    with st.form(key='signup_form'):
+        username = st.text_input("Username")  
+        full_name = st.text_input("Full Name")  
+        place = st.text_input("Place/City")  
+        mobile_number = st.text_input("Mobile Number")  
+        email = st.text_input("Email")  
+        password = st.text_input("Password", type='password')  
+        confirm_password = st.text_input("Confirm Password", type='password')  
+
+        signup_button = st.form_submit_button("Signup")  
 
     if signup_button:  
-        if username and password:  
-            signup(username, password)  # Call to the signup function  
-        else:  
-            st.warning("Please enter both username and password.")  
+        # Input validation
+        if not all([username, full_name, mobile_number, email, password, confirm_password]):
+            st.warning("Please fill out all required fields.")
+        elif password != confirm_password:
+            st.error("Passwords do not match.")
+        elif not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+            st.error("Invalid email address.")
+        elif not mobile_number.isdigit() or len(mobile_number) < 7 or len(mobile_number) > 15:
+            st.error("Invalid mobile number.")
+        else:
+            signup(username, password, full_name, place, mobile_number, email)  # Call to the signup function  
 
 # Signin Page  
 def signin_page():  
     st.title("Signin Page")  
     
-    username = st.text_input("Username")  
-    password = st.text_input("Password", type='password')  
-    signin_button = st.button("Signin")  
+    with st.form(key='signin_form'):
+        username = st.text_input("Username")  
+        password = st.text_input("Password", type='password')  
+        signin_button = st.form_submit_button("Signin")  
 
     if signin_button:  
         if username and password:  
