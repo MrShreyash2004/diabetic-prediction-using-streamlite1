@@ -95,12 +95,10 @@ def output_page(model, scaler, accuracy):
     # Display prediction results  
     st.subheader('Prediction Result')  
     if prediction[0] == 1:  
-        st.error('😔 The model predicts that the patient is **Positive for Diabetes**.')  
-        st.write("But don’t worry! With the right diet and exercise, diabetes is manageable. Stay strong and consult with your doctor for further steps.")  
+        st.error(⚠️ The model predicts that the patient is **Positive for Diabetes**. Please consult a healthcare professional for further evaluation. Remember, early detection and management can lead to better health outcomes!')
+          
     else:  
-        st.success('🎉 The model predicts that the patient is **Negative for Diabetes**!')  
-        st.write("Keep up the healthy lifestyle! You’re doing great, but regular check-ups are always a good idea to stay on top of your health.")  
-
+        st.success('🎉 The model predicts that the patient is **Negative for Diabetes**. Keep up the healthy lifestyle and regular check-ups!')
     # Correctly display the confidence score
     confidence = prediction_proba[0][prediction[0]] * 100
     st.write(f"**Confidence of Prediction:** {confidence:.2f}%")  
