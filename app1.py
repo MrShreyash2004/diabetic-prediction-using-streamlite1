@@ -95,7 +95,7 @@ def output_page(model, scaler, accuracy):
     # Display prediction results  
     st.subheader('Prediction Result')  
     if prediction[0] == 1:  
-        st.error(⚠️ The model predicts that the patient is **Positive for Diabetes**. Please consult a healthcare professional for further evaluation. Remember, early detection and management can lead to better health outcomes!')
+        st.error('⚠️The model predicts that the patient is **Positive for Diabetes**. Please consult a healthcare professional for further evaluation. Remember, early detection and management can lead to better health outcomes!')
           
     else:  
         st.success('🎉 The model predicts that the patient is **Negative for Diabetes**. Keep up the healthy lifestyle and regular check-ups!')
