@@ -1,25 +1,27 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
+# In[ ]:
 
+
+#!/usr/bin/env python
+# coding: utf-8
 
 import streamlit as st  
 import pandas as pd  
 from sklearn.model_selection import train_test_split  
 from sklearn.preprocessing import StandardScaler  
 from sklearn.linear_model import LogisticRegression  
-from sklearn.metrics import accuracy_score  
-import mysql.connector  
-from mysql.connector import Error  
+from sklearn.metrics import accuracy_score 
+import pymysql
 import hashlib  
 
-# Database connection  
+# Database connection using pymysql
 def create_connection():  
-    return mysql.connector.connect(  
+    return pymysql.connect(
         host='localhost',  
-        user='your_db_username',  # Update with your database username  
-        password='your_db_password',  # Update with your database password  
+        user='root',  # Update with your database username  
+        password='test123',  # Update with your database password  
         database='diabetes_app'  # Update with your database name  
     )  
 
@@ -36,7 +38,7 @@ def signup(username, password):
         cursor.execute("INSERT INTO users (username, password) VALUES (%s, %s)", (username, hashed_password))  
         conn.commit()  
         st.success("Signup successful! You can now sign in.")  
-    except Error as e:  
+    except pymysql.MySQLError as e:  
         st.error(f"Error during signup: {e}")  
     finally:  
         cursor.close()  
@@ -51,7 +53,7 @@ def signin(username, password):
         cursor.execute("SELECT * FROM users WHERE username = %s AND password = %s", (username, hashed_password))  
         result = cursor.fetchone()  
         return result is not None  
-    except Error as e:  
+    except pymysql.MySQLError as e:  
         st.error(f"Error during signin: {e}")  
     finally:  
         cursor.close()  
@@ -206,10 +208,4 @@ def main():
 
 if __name__ == '__main__':  
     main()
-
-
-# In[ ]:
-
-
-
 
