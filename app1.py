@@ -31,7 +31,7 @@ def build_model(data):
     X_test = scaler.transform(X_test)  
 
     # Train the model  
-    model = LogisticRegression(random_state=0)  
+    model = LogisticRegression(random_state=0, max_iter=1000)  # Increased max_iter for convergence  
     model.fit(X_train, y_train)  
 
     # Model accuracy  
@@ -74,8 +74,7 @@ def input_page():
         }  
         st.session_state.page = "output"  # Navigate to output page  
 
-        # Optional: Show an attractive message or image after prediction submission.  
-        st.success("Thank you! Your data has been submitted. Click on the 'Predict' button for the results.")   
+        st.success("Thank you! Your data has been submitted. Click on the 'Predict' button for the results.")  
 
 # Output Page  
 def output_page(model, scaler, accuracy):  
@@ -83,9 +82,10 @@ def output_page(model, scaler, accuracy):
 
     input_data = pd.DataFrame(st.session_state.inputs, index=[0])  
     
-    # Display user input  
-    st.subheader('Patient Input')  
-    st.write(input_data)  
+    # Display user input vertically using markdown
+    st.subheader('Patient Input')
+    for col in input_data.columns:
+        st.markdown(f"**{col}**: {input_data[col].values[0]}")
 
     # Predict diabetes  
     input_scaled = scaler.transform(input_data)  
@@ -95,13 +95,21 @@ def output_page(model, scaler, accuracy):
     # Display prediction results  
     st.subheader('Prediction Result')  
     if prediction[0] == 1:  
-        st.error('The model predicts that the patient is **Positive for Diabetes**')  
+        st.error('😔 The model predicts that the patient is **Positive for Diabetes**.')  
+        st.write("But don’t worry! With the right diet and exercise, diabetes is manageable. Stay strong and consult with your doctor for further steps.")  
     else:  
-        st.success('The model predicts that the patient is **Negative for Diabetes**')  
+        st.success('🎉 The model predicts that the patient is **Negative for Diabetes**!')  
+        st.write("Keep up the healthy lifestyle! You’re doing great, but regular check-ups are always a good idea to stay on top of your health.")  
 
-    st.write(f"Confidence of Prediction: {prediction_proba[0][prediction][0]*100:.2f}%")  
+    # Correctly display the confidence score
+    confidence = prediction_proba[0][prediction[0]] * 100
+    st.write(f"**Confidence of Prediction:** {confidence:.2f}%")  
 
-    
+    # Button to predict another patient
+    if st.button('🔄 Predict Another Patient'):
+        st.session_state.page = "input"  # Navigate back to input page
+
+# Main Function  
 def main():  
     # Load data and build model  
     data = load_data()  
